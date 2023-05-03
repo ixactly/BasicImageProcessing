@@ -1,9 +1,12 @@
 #include <iostream>
 #include "image.h"
+#include "ContrastTrans.h"
 #include "params.h"
 
 int main() {
-    std::string imageFilePath = "../images/color/Lenna.bmp";
-    bip::Image<unsigned char> img = bip::imread<unsigned char>(imageFilePath);
-    bip::imwrite("../images/out/Lenna.png", img, dataType::uint8_);
+    std::string image_file_path = "../images/color/Lenna.png";
+    bip::Image<uchar> img = bip::imread<uchar>(image_file_path);
+    bip::toneCurve(img, 0.5);
+
+    bip::imwrite("../images/out/Lenna_trans.png", img);
 }

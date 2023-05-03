@@ -62,68 +62,77 @@ namespace bip {
         // 画像の幅と高さを取得する
         int width = cv_img.cols;
         int height = cv_img.rows;
-        int channel = cv_img.channels();
-
+        int dims = cv_img.channels();
+        std::cout << dims << std::endl;
         // Image型
-        Image<T> img(width, height, channel);
+        Image<T> img(width, height, dims);
 
-        if (channel == 1) {
+        if (dims == 1) {
             // グレースケール画像の場合
             std::cout << "The input image is grayscale" << std::endl;
-
-        } else if (channel == 3) {
+            for (int y = 0; y < height; y++) {
+                for (int x = 0; x < width; x++) {
+                    img(x, y, 0) = static_cast<T>(cv_img.data[y * cv_img.step + x * cv_img.elemSize() + 2]); // Gチャンネル
+                }
+            }
+        } else if (dims == 3) {
             // RGB画像の場合
             std::cout << "The input image is RGB" << std::endl;
-            cv::cvtColor(cv_img, cv_img, cv::COLOR_BGR2RGB);
 
             // 各チャンネルのrawデータを取得する
-            const T *r_raw = cv_img.data;
-            const T *g_raw = cv_img.data + 1;
-            const T *b_raw = cv_img.data + 2;
+            // ここがT型ではなく, U型になる．U型は読み込むcv::Mat型のdata型に依存する
 
             // rawデータを出力する
             for (int y = 0; y < height; y++) {
                 for (int x = 0; x < width; x++) {
-                    img(x, y, 0) = r_raw[step * y + x * 3]; // Rチャンネル
-                    img(x, y, 1) = g_raw[step * y + x * 3]; // Gチャンネル
-                    img(x, y, 2) = b_raw[step * y + x * 3]; // Bチャンネル
+                    img(x, y, 0) = static_cast<T>(cv_img.data[y * cv_img.step + x * cv_img.elemSize() + 2]); // Rチャンネル
+                    img(x, y, 1) = static_cast<T>(cv_img.data[y * cv_img.step + x * cv_img.elemSize() + 1]); // Gチャンネル
+                    img(x, y, 2) = static_cast<T>(cv_img.data[y * cv_img.step + x * cv_img.elemSize() + 0]); // Bチャンネル
                 }
             }
-        } else if (channel == 4) {
+        } else if (dims == 4) {
             // RGBA画像の場合
             std::cout << "The input image is RGBA" << std::endl;
+            for (int y = 0; y < height; y++) {
+                for (int x = 0; x < width; x++) {
+                    img(x, y, 0) = static_cast<T>(cv_img.data[y * cv_img.step + x * cv_img.elemSize() + 2]); // Rチャンネル
+                    img(x, y, 1) = static_cast<T>(cv_img.data[y * cv_img.step + x * cv_img.elemSize() + 1]); // Gチャンネル
+                    img(x, y, 2) = static_cast<T>(cv_img.data[y * cv_img.step + x * cv_img.elemSize() + 0]); // Bチャンネル
+                    img(x, y, 3) = static_cast<T>(cv_img.data[y * cv_img.step + x * cv_img.elemSize() + 3]); // Aチャンネル
+                }
+            }
         }
         return img;
     }
 
     template<typename T>
-    void imwrite(const std::string &path, const Image<T> &img, dataType type) {
+    void imwrite(const std::string &path, const Image<T> &img) {
         cv::Mat cv_img;
         int dims = img.dims;
         if (dims == 1) {
-            cv_img = cv::Mat(img.rows, img.cols, (int)type + (dims-1) * 8);
+            cv_img = cv::Mat(img.rows, img.cols, CV_8U);
             for (int y = 0; y < img.rows; y++) {
                 for (int x = 0; x < img.cols; x++) {
-                    cv_img.at<T>(y, x) = static_cast<T>(img(x, y, 0));
+                    cv_img.at<T>(y, x) = static_cast<uchar>(img(x, y, 0));
                 }
             }
         } else if (dims == 3) {
-            cv_img = cv::Mat(img.rows, img.cols, (int)type + (dims-1) * 8);
+            cv_img = cv::Mat(img.rows, img.cols, CV_8UC3);
             for (int y = 0; y < img.rows; y++) {
                 for (int x = 0; x < img.cols; x++) {
-                    cv_img.at<cv::Vec3b>(y, x)[0] = static_cast<T>(img(x, y, 2));
-                    cv_img.at<cv::Vec3b>(y, x)[1] = static_cast<T>(img(x, y, 1));
-                    cv_img.at<cv::Vec3b>(y, x)[2] = static_cast<T>(img(x, y, 0));
+                    cv_img.at<cv::Vec3b>(y, x)[0] = static_cast<uchar>(img(x, y, 2));
+                    cv_img.at<cv::Vec3b>(y, x)[1] = static_cast<uchar>(img(x, y, 1));
+                    cv_img.at<cv::Vec3b>(y, x)[2] = static_cast<uchar>(img(x, y, 0));
                 }
             }
         } else if (dims == 4) {
-            cv_img = cv::Mat(img.rows, img.cols, (int)type + (dims-1) * 8);
+            cv_img = cv::Mat(img.rows, img.cols, CV_8UC4);
             for (int y = 0; y < img.rows; y++) {
                 for (int x = 0; x < img.cols; x++) {
-                    cv_img.at<cv::Vec4b>(y, x)[0] = static_cast<T>(img(x, y, 2));
-                    cv_img.at<cv::Vec4b>(y, x)[1] = static_cast<T>(img(x, y, 1));
-                    cv_img.at<cv::Vec4b>(y, x)[2] = static_cast<T>(img(x, y, 0));
-                    cv_img.at<cv::Vec4b>(y, x)[3] = static_cast<T>(img(x, y, 3));
+                    cv_img.at<cv::Vec4b>(y, x)[0] = static_cast<uchar>(img(x, y, 2));
+                    cv_img.at<cv::Vec4b>(y, x)[1] = static_cast<uchar>(img(x, y, 1));
+                    cv_img.at<cv::Vec4b>(y, x)[2] = static_cast<uchar>(img(x, y, 0));
+                    cv_img.at<cv::Vec4b>(y, x)[3] = static_cast<uchar>(img(x, y, 3));
                 }
             }
         }
