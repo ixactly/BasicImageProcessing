@@ -14,4 +14,6 @@ enum class dataType {
     double64_,
     float16_,
 };
+
+constexpr double P_MAX = 255.0;
 #endif //IMAGEPROCESSING_PARAMS_H

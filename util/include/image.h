@@ -63,21 +63,16 @@ namespace bip {
         int width = cv_img.cols;
         int height = cv_img.rows;
         int dims = cv_img.channels();
-        std::cout << dims << std::endl;
         // Image型
         Image<T> img(width, height, dims);
 
         if (dims == 1) {
-            // グレースケール画像の場合
-            std::cout << "The input image is grayscale" << std::endl;
             for (int y = 0; y < height; y++) {
                 for (int x = 0; x < width; x++) {
                     img(x, y, 0) = static_cast<T>(cv_img.data[y * cv_img.step + x * cv_img.elemSize() + 2]); // Gチャンネル
                 }
             }
         } else if (dims == 3) {
-            // RGB画像の場合
-            std::cout << "The input image is RGB" << std::endl;
 
             // 各チャンネルのrawデータを取得する
             // ここがT型ではなく, U型になる．U型は読み込むcv::Mat型のdata型に依存する
@@ -92,7 +87,6 @@ namespace bip {
             }
         } else if (dims == 4) {
             // RGBA画像の場合
-            std::cout << "The input image is RGBA" << std::endl;
             for (int y = 0; y < height; y++) {
                 for (int x = 0; x < width; x++) {
                     img(x, y, 0) = static_cast<T>(cv_img.data[y * cv_img.step + x * cv_img.elemSize() + 2]); // Rチャンネル
