@@ -8,8 +8,7 @@ int main() {
     bip::Image<uchar> img = bip::imread<uchar>(image_file_path);
     // bip::toneCurve(img, 0.5);
     // bip::posterize(img, 4);
-    bip::pseudoColor(img);
+    // bip::pseudoColor(img);
 
-
-    bip::imwrite("../images/out/Lenna_pseudo.png", img);
+    bip::imwrite("../images/out/Lenna_col_pseudo.png", img);
 }

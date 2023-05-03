@@ -11,9 +11,9 @@
 namespace bip {
     template<typename T>
     void toneCurve(Image<T> &img, double gamma) {
-        for (int c = 0; c < img.dims; c++) {
-            for (int x = 0; x < img.rows; x++) {
-                for (int y = 0; y < img.cols; y++) {
+        for (int c = 0; c < img.dims(); c++) {
+            for (int x = 0; x < img.rows(); x++) {
+                for (int y = 0; y < img.cols(); y++) {
                     img(x, y, c) = static_cast<T>(P_MAX * std::pow(img(x, y, c) / P_MAX, 1.0 / gamma));
                 }
             }
@@ -44,7 +44,7 @@ namespace bip {
             convertToGray(img);
 
         Image<T> rgb(img.rows(), img.cols(), 3);
-        auto r_val = [](double gray_val){
+        auto r_val = [](double gray_val) -> T {
             if (gray_val < P_MAX / 2.0) {
                 return 0.0;
             } else if (gray_val < 3.0 * P_MAX / 4.0) {
@@ -53,7 +53,7 @@ namespace bip {
                 return P_MAX;
             }
         };
-        auto g_val = [](double gray_val){
+        auto g_val = [](double gray_val) -> T {
             if (gray_val < P_MAX / 4.0) {
                 return 4.0 * gray_val;
             } else if (gray_val < 3 * P_MAX / 4.0) {
@@ -62,7 +62,7 @@ namespace bip {
                 return 4.0 * (P_MAX - gray_val);
             }
         };
-        auto b_val = [] (double gray_val) {
+        auto b_val = [](double gray_val) -> T  {
             if (gray_val < P_MAX / 4.0) {
                 return P_MAX;
             } else if (gray_val < P_MAX / 2.0) {
@@ -71,6 +71,7 @@ namespace bip {
                 return 0.0;
             }
         };
+
         for (int x = 0; x < img.cols(); x++) {
             for (int y = 0; y < img.rows(); y++) {
                 rgb(x, y, 0) = r_val(static_cast<double>(img(x, y, 0)));
