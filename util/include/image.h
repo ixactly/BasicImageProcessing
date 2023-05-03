@@ -14,21 +14,18 @@ namespace bip {
     template<typename T>
     class Image {
     public:
-        const int cols;
-        const int rows;
-        const int dims;
 
-        Image(int width, int height, int channel) : cols(width), rows(height), dims(channel),
+        Image(int height, int width, int channel) : rows_(height), cols_(width), dims_(channel),
                                                     data_(new T[width * height * channel]) {};
 
-        Image(Image &&other) noexcept: cols(other.cols), rows(other.rows), dims(other.dims),
+        Image(Image &&other) noexcept: rows_(other.rows_), cols_(other.cols_), dims_(other.dims_),
                                        data_(std::move(other.data_)) {};
 
         Image &operator=(Image &&other) noexcept {
             if (this != &other) {
-                cols = other.cols;
-                rows = other.rows;
-                dims = other.dims;
+                rows_ = other.rows_;
+                cols_ = other.cols_;
+                dims_ = other.dims_;
                 data_ = std::move(other.data_);
             }
             return *this;
@@ -41,14 +38,31 @@ namespace bip {
         ~Image() = default;
 
         T &operator()(int x, int y, int c) {
-            return data_[c + x * dims + y * cols * dims];
+            return data_[c + x * dims_ + y * rows_ * dims_];
         }
 
         const T &operator()(int x, int y, int c) const {
-            return data_[c + x * dims + y * cols * dims];
+            return data_[c + x * dims_ + y * rows_ * dims_];
+        }
+
+        int rows() const {
+            return rows_;
+        }
+        int cols() const {
+            return cols_;
+        }
+        int dims() const {
+            return dims_;
+        }
+
+        void reset() {
+            data_.reset();
         }
 
     private:
+        int rows_;
+        int cols_;
+        int dims_;
         std::unique_ptr<T[]> data_;
     };
 
@@ -102,27 +116,27 @@ namespace bip {
     template<typename T>
     void imwrite(const std::string &path, const Image<T> &img) {
         cv::Mat cv_img;
-        int dims = img.dims;
+        int dims = img.dims();
         if (dims == 1) {
-            cv_img = cv::Mat(img.rows, img.cols, CV_8U);
-            for (int y = 0; y < img.rows; y++) {
-                for (int x = 0; x < img.cols; x++) {
+            cv_img = cv::Mat(img.cols(), img.rows(), CV_8U);
+            for (int y = 0; y < img.cols(); y++) {
+                for (int x = 0; x < img.rows(); x++) {
                     cv_img.at<T>(y, x) = static_cast<uchar>(img(x, y, 0));
                 }
             }
         } else if (dims == 3) {
-            cv_img = cv::Mat(img.rows, img.cols, CV_8UC3);
-            for (int y = 0; y < img.rows; y++) {
-                for (int x = 0; x < img.cols; x++) {
+            cv_img = cv::Mat(img.cols(), img.rows(), CV_8UC3);
+            for (int y = 0; y < img.cols(); y++) {
+                for (int x = 0; x < img.rows(); x++) {
                     cv_img.at<cv::Vec3b>(y, x)[0] = static_cast<uchar>(img(x, y, 2));
                     cv_img.at<cv::Vec3b>(y, x)[1] = static_cast<uchar>(img(x, y, 1));
                     cv_img.at<cv::Vec3b>(y, x)[2] = static_cast<uchar>(img(x, y, 0));
                 }
             }
         } else if (dims == 4) {
-            cv_img = cv::Mat(img.rows, img.cols, CV_8UC4);
-            for (int y = 0; y < img.rows; y++) {
-                for (int x = 0; x < img.cols; x++) {
+            cv_img = cv::Mat(img.cols(), img.rows(), CV_8UC4);
+            for (int y = 0; y < img.cols(); y++) {
+                for (int x = 0; x < img.rows(); x++) {
                     cv_img.at<cv::Vec4b>(y, x)[0] = static_cast<uchar>(img(x, y, 2));
                     cv_img.at<cv::Vec4b>(y, x)[1] = static_cast<uchar>(img(x, y, 1));
                     cv_img.at<cv::Vec4b>(y, x)[2] = static_cast<uchar>(img(x, y, 0));
@@ -133,6 +147,15 @@ namespace bip {
         cv::imwrite(path, cv_img);
     }
 
-
+    template<typename T>
+    void convertToGray(Image<T> &img) {
+        Image<T> gray(img.rows(), img.cols(), 1);
+        for (int x = 0; x < gray.cols(); x++) {
+            for (int y = 0; y < gray.rows(); y++) {
+                gray(x, y, 0) = (img(x, y, 0) + img(x, y, 1) + img(x, y, 2)) / 3.0;
+            }
+        }
+        img = std::move(gray);
+    }
 }
 #endif //IMAGEPROCESSING_IMAGE_H
