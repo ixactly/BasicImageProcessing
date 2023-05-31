@@ -14,13 +14,10 @@ namespace bip {
     template<typename T>
     class Image {
     public:
-
         Image(int height, int width, int channel) : rows_(height), cols_(width), dims_(channel),
                                                     data_(new T[width * height * channel]) {};
-
         Image(Image &&other) noexcept: rows_(other.rows_), cols_(other.cols_), dims_(other.dims_),
                                        data_(std::move(other.data_)) {};
-
         Image &operator=(Image &&other) noexcept {
             if (this != &other) {
                 rows_ = other.rows_;
@@ -31,8 +28,8 @@ namespace bip {
             return *this;
         };
 
+        // copiable
         Image(const Image &) = delete;
-
         Image &operator=(const Image &) = delete;
 
         ~Image() = default;
@@ -59,6 +56,16 @@ namespace bip {
             data_.reset();
         }
 
+        void forEach(std::function<T> f) {
+            for (int c = 0; c < dims_; c++) {
+                for (int y = 0; y < cols_; y++) {
+                    for (int x = 0; x < rows_; x++) {
+                        this(x, y, c) = f(this(x, y, c));
+                    }
+                }
+            }
+        }
+
     private:
         int rows_;
         int cols_;
@@ -83,7 +90,8 @@ namespace bip {
         if (dims == 1) {
             for (int y = 0; y < height; y++) {
                 for (int x = 0; x < width; x++) {
-                    img(x, y, 0) = static_cast<T>(cv_img.data[y * cv_img.step + x * cv_img.elemSize() + 2]); // Gチャンネル
+                    img(x, y, 0) = static_cast<T>(cv_img.data[y * cv_img.step + x * cv_img.elemSize()]);
+                    // std::cout << sizeof(img(x, y, 0)) << std::endl;
                 }
             }
         } else if (dims == 3) {
@@ -121,7 +129,7 @@ namespace bip {
             cv_img = cv::Mat(img.cols(), img.rows(), CV_8U);
             for (int y = 0; y < img.cols(); y++) {
                 for (int x = 0; x < img.rows(); x++) {
-                    cv_img.at<T>(y, x) = static_cast<uchar>(img(x, y, 0));
+                    cv_img.at<uchar>(y, x) = static_cast<uchar>(img(x, y, 0));
                 }
             }
         } else if (dims == 3) {

@@ -12,8 +12,8 @@ namespace bip {
     template<typename T>
     void toneCurve(Image<T> &img, double gamma) {
         for (int c = 0; c < img.dims(); c++) {
-            for (int x = 0; x < img.rows(); x++) {
-                for (int y = 0; y < img.cols(); y++) {
+            for (int x = 0; x < img.cols(); x++) {
+                for (int y = 0; y < img.rows(); y++) {
                     img(x, y, c) = static_cast<T>(P_MAX * std::pow(img(x, y, c) / P_MAX, 1.0 / gamma));
                 }
             }
@@ -30,8 +30,8 @@ namespace bip {
         };
 
         for (int c = 0; c < img.dims; c++) {
-            for (int x = 0; x < img.rows; x++) {
-                for (int y = 0; y < img.cols; y++) {
+            for (int x = 0; x < img.cols; x++) {
+                for (int y = 0; y < img.rows; y++) {
                     img(x, y, c) = static_cast<T>(retPixelVal(step, img(x, y, c)));
                 }
             }
@@ -43,7 +43,7 @@ namespace bip {
         if (img.dims() != 1)
             convertToGray(img);
 
-        Image<T> rgb(img.rows(), img.cols(), 3);
+        Image<T> rgb(img.cols(), img.rows(), 3);
         auto r_val = [](double gray_val) -> T {
             if (gray_val < P_MAX / 2.0) {
                 return 0.0;
